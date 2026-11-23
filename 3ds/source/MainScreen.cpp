@@ -144,7 +144,7 @@ MainScreen::MainScreen(void) : hid(rowlen * collen, collen)
     buttonRestoreAL->canChangeColorWhenSelected(true);
     buttonSend->canChangeColorWhenSelected(true);
 
-    ver = StringUtils::versionString();
+    ver = StringUtils::versionString() + " GitHub";
 
     C2D_PlainImageTint(&flagTint, COLOR_TEAL, 1.0f);
     C2D_PlainImageTint(&checkboxTint, COLOR_BLUE, 1.0f); // blue check on the white selection chip
@@ -527,12 +527,32 @@ void MainScreen::update(const InputState& input)
         // A backup/restore changed one or more folders; drop every cached total so
         // they get re-walked off-thread (a batch may have touched many titles).
         BackupSizeCache::get().invalidateAll();
-        if (result->cancelled) {
+        g_titlesDirty = true;
+        if (result->githubList && result->ok) {
+            std::vector<MenuOverlay::Item> backups;
+            for (const auto& remote : result->githubBackups) {
+                backups.push_back({remote.name, [this, remote, title = result->githubTitle, kind = result->githubKind, cfg = result->githubConfig]() {
+                    currentOverlay = std::make_shared<YesNoOverlay>(*this, i18n::t("github.confirm_download"),
+                        [this, remote, title, kind, cfg]() {
+                            removeOverlay();
+                            TransferJob::get().enqueueGitHub(title, kind, 2, {}, remote, cfg);
+                            TransferJob::get().start();
+                        }, [this]() { removeOverlay(); });
+                }});
+            }
+            if (backups.empty()) currentOverlay = std::make_shared<InfoOverlay>(*this, i18n::t("github.empty"));
+            else currentOverlay = std::make_shared<MenuOverlay>(*this, i18n::t("github.choose"), std::move(backups));
+        }
+        else if (!result->githubError.empty()) {
+            currentOverlay = std::make_shared<ErrorOverlay>(*this, -1, result->githubError);
+        }
+        else if (result->cancelled) {
             // User-requested stop of a backup: neutral info, not an error.
             currentOverlay = std::make_shared<InfoOverlay>(*this, i18n::t("transfer.cancelled"));
         }
         else if (result->ok) {
             std::string message = result->successMsg;
+            if (!result->githubWarning.empty()) message += "\n\n" + i18n::t("github.local_kept") + "\n" + result->githubWarning;
             if (!result->skippedInUse.empty()) {
                 std::string names;
                 for (const auto& rel : result->skippedInUse) {
@@ -796,6 +816,7 @@ void MainScreen::handleEvents(const InputState& input)
             // is the one a user finds by looking rather than by being told.
             {i18n::t("main.refresh"), [this]() { refreshTitlesFull(); }},
             {i18n::t("main.scripts"), [this]() { startScriptPicker(); }},
+            {i18n::t("github.title"), [this]() { startGitHubMenu(); }},
             {i18n::t("settings.title"), []() { g_pendingScreen = std::make_shared<SettingsScreen>(g_screen); }},
         };
         currentOverlay = std::make_shared<MenuOverlay>(*this, i18n::t("menu.title"), std::move(items));
@@ -1060,3 +1081,39 @@ void MainScreen::startTransferSend(void)
         std::move(title), std::move(backupPath), std::move(backupName), std::move(dataType), std::move(dst->ip), dst->port, std::move(pin));
     TransferJob::get().start();
 }
+
+void MainScreen::startGitHubMenu(void)
+{
+    if (!selected.valid || TransferJob::get().active() || TitleCatalog::get().progress().active) {
+        currentOverlay = std::make_shared<InfoOverlay>(*this, i18n::t("main.no_titles"));
+        return;
+    }
+    Title title;
+    TitleCatalog::get().getTitle(title, hid.fullIndex(), backupKind);
+    const auto kind = backupKind;
+    const auto row = directoryList->index();
+    const bool hasBackup = row > 0 && !isReceiveRow(row);
+    const auto path = hasBackup ? title.backup(kind).fullPath(rowToCell(row)) : std::u16string{};
+    std::vector<MenuOverlay::Item> items = {
+        {i18n::t("github.send"), [this, title, kind, path]() {
+            if (path.empty()) {
+                currentOverlay = std::make_shared<InfoOverlay>(*this, i18n::t("main.select_backup_send"));
+                return;
+            }
+            currentOverlay = std::make_shared<YesNoOverlay>(*this, i18n::t("github.confirm_upload"),
+                [this, title, kind, path]() {
+                    removeOverlay();
+                    TransferJob::get().enqueueGitHub(title, kind, 0, path);
+                    TransferJob::get().start();
+                }, [this]() { removeOverlay(); });
+        }},
+        {i18n::t("github.receive"), [this, title, kind]() {
+            removeOverlay();
+            TransferJob::get().enqueueGitHub(title, kind, 1);
+            TransferJob::get().start();
+        }},
+        {i18n::t("settings.title"), []() { g_pendingScreen = std::make_shared<SettingsScreen>(g_screen); }},
+    };
+    currentOverlay = std::make_shared<MenuOverlay>(*this, i18n::t("github.title"), std::move(items));
+}
+

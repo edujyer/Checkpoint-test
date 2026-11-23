@@ -25,6 +25,8 @@
  */
 
 #include "SettingsScreen.hpp"
+#include "githubsync.hpp"
+#include "MessageOverlay.hpp"
 #include "FolderBrowserOverlay.hpp"
 #include "KeyboardManager.hpp"
 #include "TitlePickerOverlay.hpp"
@@ -43,7 +45,7 @@
 #include <sys/statvfs.h>
 
 // Section indices, used across draw/update.
-enum SectionId { SEC_GENERAL = 0, SEC_LIBRARY, SEC_FOLDERS, SEC_NETWORK, SEC_ABOUT };
+enum SectionId { SEC_GENERAL = 0, SEC_LIBRARY, SEC_FOLDERS, SEC_NETWORK, SEC_GITHUB, SEC_ABOUT };
 
 namespace {
     struct Section {
@@ -59,6 +61,7 @@ namespace {
         {"L", "settings.library.title", "settings.library.blurb"},
         {"F", "settings.folders.title", "settings.folders.blurb"},
         {"N", "settings.network.title", "settings.network.blurb"},
+        {"H", "github.title", "github.blurb"},
         {"i", "settings.about.title", "settings.about.blurb"},
     };
     constexpr size_t SECTION_COUNT = sizeof(SECTIONS) / sizeof(SECTIONS[0]);
@@ -70,8 +73,7 @@ namespace {
 
     // General section rows, in draw order. Row index maps 1:1 to the mutators
     // used in update(): 0 light theme, 1 scan_cart, 2 nand_saves,
-    // 3 dsiware_saves, 4 transfer_enabled, 5 confirm_restore, 6 quick_backup,
-    // 7 auto_update.
+    // 3 dsiware_saves, 4 transfer_enabled, 5 confirm_restore, 6 quick_backup.
     const ToggleRow GENERAL_ROWS[] = {
         {"settings.general.light_theme", "settings.general.light_theme.sub"},
         {"settings.general.scan_cart", "settings.general.scan_cart.sub"},
@@ -80,7 +82,6 @@ namespace {
         {"settings.general.transfer", "settings.general.transfer.sub"},
         {"settings.general.confirm_restore", "settings.general.confirm_restore.sub"},
         {"settings.general.quick_backup", "settings.general.quick_backup.sub"},
-        {"settings.general.auto_update", "settings.general.auto_update.sub"},
     };
     constexpr size_t GENERAL_COUNT = sizeof(GENERAL_ROWS) / sizeof(GENERAL_ROWS[0]);
     // Extra General row shown first, before the toggles: a language cycler
@@ -172,11 +173,14 @@ SettingsScreen::SettingsScreen(std::shared_ptr<Screen> parent) : mParent(std::mo
 {
     C2D_PlainImageTint(&flagTint, COLOR_TEAL, 1.0f);
     rebuildRows();
+    auto cfg = GitHubSync::loadConfig();
+    mGitHubRepo = cfg.repository; mGitHubBranch = cfg.branch;
+    mGitHubAuto = cfg.afterBackup; mGitHubToken = GitHubSync::tokenPresent();
 }
 
 bool SettingsScreen::sectionInteractive(size_t section) const
 {
-    return section == SEC_GENERAL || section == SEC_LIBRARY || section == SEC_FOLDERS || section == SEC_NETWORK;
+    return section == SEC_GENERAL || section == SEC_LIBRARY || section == SEC_FOLDERS || section == SEC_NETWORK || section == SEC_GITHUB;
 }
 
 size_t SettingsScreen::contentRowCount(size_t section) const
@@ -188,6 +192,8 @@ size_t SettingsScreen::contentRowCount(size_t section) const
             return mLibraryRows.size();
         case SEC_FOLDERS:
             return mFolderRows.size();
+        case SEC_GITHUB:
+            return 4;
         case SEC_NETWORK:
             return 3; // FTP-server toggle, default receive PIN, server port
         default:
@@ -305,7 +311,7 @@ void SettingsScreen::drawTop(void) const
     const size_t sel     = navHid.index();
     const float lineFeed = fontGetInfo(NULL)->lineFeed;
     for (size_t i = 0; i < SECTION_COUNT; i++) {
-        const int rowY   = 34 + (int)i * 32;
+        const int rowY   = 30 + (int)i * 31;
         const bool isSel = i == sel;
         if (isSel) {
             C2D_DrawRectSolid(8, rowY, 0.5f, 150, 28, C2D_Color32(122, 66, 196, 40));
@@ -349,7 +355,7 @@ void SettingsScreen::drawGeneral(void) const
 {
     Configuration& cfg             = Configuration::getInstance();
     const bool vals[GENERAL_COUNT] = {cfg.theme() == "light", cfg.shouldScanCard(), cfg.nandSaves(), cfg.dsiwareSaves(), cfg.transferEnabled(),
-        cfg.confirmRestore(), cfg.quickBackup(), cfg.autoUpdate()};
+        cfg.confirmRestore(), cfg.quickBackup()};
     // Windowed like the Library/Folders lists: more rows than fit scroll under a
     // right-edge scrollbar. Stride 34 matches drawScrollbar's track geometry.
     for (int i = 0; i < VISIBLE_ROWS && contentOffset + i < (int)GENERAL_ROW_TOTAL; i++) {
@@ -549,6 +555,9 @@ void SettingsScreen::drawBottom(void) const
         case SEC_NETWORK:
             drawNetwork();
             break;
+        case SEC_GITHUB:
+            drawGitHub();
+            break;
         case SEC_ABOUT:
             drawAbout();
             break;
@@ -593,9 +602,6 @@ void SettingsScreen::toggleGeneral(int idx)
             break;
         case 6:
             cfg.setQuickBackup(!cfg.quickBackup());
-            break;
-        case 7:
-            cfg.setAutoUpdate(!cfg.autoUpdate());
             break;
     }
     // Cart scan, NAND saves and DSiWare saves change which titles the grid loads.
@@ -758,6 +764,10 @@ void SettingsScreen::update(const InputState& input)
                 contentFocus = false;
             }
         }
+        else if (sel == SEC_GITHUB) {
+            if (kDown & KEY_A) editGitHub(contentCursor);
+            else if (kDown & KEY_B) contentFocus = false;
+        }
         else if (sel == SEC_NETWORK) {
             if (kDown & KEY_A) {
                 if (contentCursor == 1) {
@@ -799,3 +809,52 @@ void SettingsScreen::update(const InputState& input)
         savedTimer--;
     }
 }
+
+void SettingsScreen::drawGitHub(void) const
+{
+    drawListRow(30, i18n::t("github.repository"), mGitHubRepo.empty() ? i18n::t("github.unset") : mGitHubRepo,
+        COLOR_ACCENT, contentFocus && contentCursor == 0, false);
+    drawListRow(64, i18n::t("github.branch"), mGitHubBranch, COLOR_ACCENT, contentFocus && contentCursor == 1, false);
+    drawListRow(98, i18n::t("github.token"), i18n::t(mGitHubToken ? "github.token_set" : "github.token_file"),
+        COLOR_ACCENT, contentFocus && contentCursor == 2, false);
+    drawToggleRow(132, i18n::t("github.after_backup"), i18n::t("github.after_backup_sub"), mGitHubAuto, contentFocus && contentCursor == 3);
+    drawHints(320, 223, std::string(GLYPH_A) + " " + i18n::t("hint.edit") + "    " + GLYPH_B + " " + i18n::t("hint.back"));
+}
+
+void SettingsScreen::editGitHub(int row)
+{
+    if (row == 2) {
+        mGitHubToken = GitHubSync::tokenPresent();
+        currentOverlay = std::make_shared<InfoOverlay>(*this, i18n::t("github.token_help"));
+        return;
+    }
+    auto cfg = GitHubSync::loadConfig();
+    if (row == 0) {
+        const auto value = KeyboardManager::get().text(cfg.repository, i18n::t("github.repo_prompt"), 140);
+        if (value.empty()) return;
+        if (!GitHubSync::validRepository(value)) {
+            currentOverlay = std::make_shared<ErrorOverlay>(*this, -1, i18n::t("github.config_error")); return;
+        }
+        cfg.repository = value;
+    }
+    else if (row == 1) {
+        const auto value = KeyboardManager::get().text(cfg.branch, i18n::t("github.branch"), 200);
+        if (value.empty()) return;
+        if (!GitHubSync::validBranch(value)) {
+            currentOverlay = std::make_shared<ErrorOverlay>(*this, -1, i18n::t("github.config_error")); return;
+        }
+        cfg.branch = value;
+    }
+    else if (row == 3) {
+        if (!cfg.afterBackup && (!GitHubSync::validRepository(cfg.repository) || !GitHubSync::validBranch(cfg.branch) || !GitHubSync::tokenPresent())) {
+            currentOverlay = std::make_shared<InfoOverlay>(*this, i18n::t("github.setup_first")); return;
+        }
+        cfg.afterBackup = !cfg.afterBackup;
+    }
+    if (!GitHubSync::saveConfig(cfg)) {
+        currentOverlay = std::make_shared<ErrorOverlay>(*this, -1, i18n::t("github.sd_error")); return;
+    }
+    mGitHubRepo = cfg.repository; mGitHubBranch = cfg.branch; mGitHubAuto = cfg.afterBackup;
+    savedTimer = SAVED_FLASH_FRAMES;
+}
+

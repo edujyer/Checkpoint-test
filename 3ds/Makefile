@@ -31,8 +31,8 @@ include $(DEVKITARM)/3ds_rules
 #     - icon.png
 #     - <libctru folder>/default_icon.png
 #---------------------------------------------------------------------------------
-APP_TITLE		:= 	Checkpoint
-APP_DESCRIPTION	:=	Checkpoint: save manager
+APP_TITLE		:= 	Checkpoint GH
+APP_DESCRIPTION	:=	Checkpoint: GitHub sync edition
 APP_AUTHOR		:=	Bernardo Giordano, FlagBrew
 
 TARGET			:=	$(subst $e ,_,$(notdir $(APP_TITLE)))
@@ -76,8 +76,8 @@ RSF_PATH		:=	assets/app.rsf
 LOGO			:=	assets/splash.bin
 
 # If left blank, makerom will use default values (0xff3ff and CTR-P-CTAP, respectively)
-UNIQUE_ID		:=	0xBCFFF
-PRODUCT_CODE	:=	CTR-HB-CKPT
+UNIQUE_ID		:=	0xED071
+PRODUCT_CODE	:=	CTR-HB-CKGH
 
 # Don't really need to change this
 ICON_FLAGS          :=	nosavebackups,visible
@@ -359,3 +359,4 @@ endef
 #---------------------------------------------------------------------------------------
 endif
 #---------------------------------------------------------------------------------------
+

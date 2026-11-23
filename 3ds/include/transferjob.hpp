@@ -28,6 +28,7 @@
 #define TRANSFERJOB_HPP
 
 #include "title.hpp"
+#include "githubsync.hpp"
 #include "transfer.hpp"
 #include <atomic>
 #include <deque>
@@ -71,6 +72,13 @@ public:
         // batch counts as success only when failed == 0.
         size_t failed = 0;
         size_t total  = 0;
+        std::string githubError;
+        std::string githubWarning; // local backup succeeded; cloud copy did not
+        bool githubList = false;
+        std::vector<GitHubSync::RemoteBackup> githubBackups;
+        Title githubTitle;
+        BackupKind githubKind = BackupKind::Save;
+        GitHubSync::Config githubConfig;
     };
 
     static TransferJob& get(void)
@@ -92,6 +100,8 @@ public:
 
     // Drains the queue on a worker thread, if there is work and none is already
     // running. Idempotent and safe to call with an empty queue.
+    void enqueueGitHub(Title title, BackupKind kind, int operation, std::u16string path = {}, GitHubSync::RemoteBackup remote = {},
+        std::optional<GitHubSync::Config> config = std::nullopt);
     void start(void);
 
     // True while the worker is draining the queue (the main loop renders the
@@ -110,7 +120,7 @@ private:
 
     void run(void);
 
-    enum class Kind { Backup, Restore, Send };
+    enum class Kind { Backup, Restore, Send, GitHubUpload, GitHubList, GitHubDownload };
 
     struct WorkItem {
         Kind op = Kind::Backup;
@@ -124,6 +134,8 @@ private:
         std::string ip;
         u16 port = 0;
         std::string token;
+        GitHubSync::Config githubConfig;
+        GitHubSync::RemoteBackup remote;
     };
 
     enum class State { Idle, Running, Done };
@@ -135,3 +147,4 @@ private:
 };
 
 #endif // TRANSFERJOB_HPP
+

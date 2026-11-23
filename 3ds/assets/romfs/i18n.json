@@ -2311,5 +2311,178 @@
     "ja": "終了コード {0}",
     "zh": "退出 {0}",
     "ru": "выход {0}"
+  },
+  "github.title": {
+    "en": "GitHub",
+    "fr": "GitHub"
+  },
+  "github.blurb": {
+    "en": "Back up to your private GitHub repository. Retrieve a backup to the SD card, then restore it manually.",
+    "fr": "Sauvegardes vers ton dépôt GitHub privé. Récupère une copie sur la SD, puis restaure-la manuellement."
+  },
+  "github.repository": {
+    "en": "Private repository",
+    "fr": "Dépôt privé"
+  },
+  "github.branch": {
+    "en": "Branch",
+    "fr": "Branche"
+  },
+  "github.repo_prompt": {
+    "en": "owner/private-repository",
+    "fr": "compte/depot-prive"
+  },
+  "github.unset": {
+    "en": "Not configured",
+    "fr": "Non configuré"
+  },
+  "github.token": {
+    "en": "Access token",
+    "fr": "Token d'accès"
+  },
+  "github.token_set": {
+    "en": "Token file detected",
+    "fr": "Fichier token détecté"
+  },
+  "github.token_file": {
+    "en": "Press A for setup",
+    "fr": "Appuie sur A pour configurer"
+  },
+  "github.token_help": {
+    "en": "Create a token restricted to your private save repository, with Contents: read and write. Put only the token in /3ds/Checkpoint/github-token.txt on the SD card. Do not share this file.",
+    "fr": "Crée un token limité au dépôt privé des sauvegardes, avec Contents : lecture et écriture. Mets seulement le token dans /3ds/Checkpoint/github-token.txt sur la SD. Ne partage pas ce fichier."
+  },
+  "github.after_backup": {
+    "en": "Send after each backup",
+    "fr": "Envoyer après chaque backup"
+  },
+  "github.after_backup_sub": {
+    "en": "Upload after the local copy succeeds",
+    "fr": "Envoi après réussite de la copie locale"
+  },
+  "github.setup_first": {
+    "en": "Configure the repository, branch and token first.",
+    "fr": "Configure d'abord le dépôt, la branche et le token."
+  },
+  "github.config_error": {
+    "en": "Use owner/repository and a valid branch name.",
+    "fr": "Indique compte/depot et une branche valide."
+  },
+  "github.send": {
+    "en": "Send selected backup",
+    "fr": "Envoyer le backup sélectionné"
+  },
+  "github.receive": {
+    "en": "Browse cloud backups",
+    "fr": "Récupérer un backup GitHub"
+  },
+  "github.choose": {
+    "en": "Choose a GitHub backup",
+    "fr": "Choisis un backup GitHub"
+  },
+  "github.confirm_upload": {
+    "en": "Send this backup to your private GitHub repository? An existing file with the same name will get a new version.",
+    "fr": "Envoyer ce backup vers ton dépôt GitHub privé ? Un fichier de même nom recevra une nouvelle version."
+  },
+  "github.confirm_download": {
+    "en": "Download a new copy to the SD card? Your current game save and existing backups will be preserved.",
+    "fr": "Télécharger une nouvelle copie sur la SD ? La sauvegarde du jeu et les backups existants seront conservés."
+  },
+  "github.empty": {
+    "en": "No GitHub backups for this title and data type.",
+    "fr": "Aucun backup GitHub pour ce jeu et ce type de données."
+  },
+  "github.uploading": {
+    "en": "Sending to GitHub",
+    "fr": "Envoi vers GitHub"
+  },
+  "github.downloading": {
+    "en": "Downloading from GitHub",
+    "fr": "Téléchargement GitHub"
+  },
+  "github.listing": {
+    "en": "Reading GitHub backups",
+    "fr": "Lecture des backups GitHub"
+  },
+  "github.packing": {
+    "en": "Preparing GitHub backup",
+    "fr": "Préparation du backup GitHub"
+  },
+  "github.unpacking": {
+    "en": "Checking downloaded backup",
+    "fr": "Vérification du backup reçu"
+  },
+  "github.uploaded": {
+    "en": "Backup sent to GitHub.",
+    "fr": "Backup envoyé sur GitHub."
+  },
+  "github.downloaded": {
+    "en": "Backup downloaded to the SD card. Select it and use Restore to load it into the game.",
+    "fr": "Backup récupéré sur la SD. Sélectionne-le puis utilise Restaurer pour le charger dans le jeu."
+  },
+  "github.local_kept": {
+    "en": "Local backup saved. GitHub upload failed; retry from the GitHub menu.",
+    "fr": "Backup local conservé. L'envoi GitHub a échoué ; réessaie depuis le menu GitHub."
+  },
+  "github.network_error": {
+    "en": "GitHub connection failed. Check Wi-Fi and try again.",
+    "fr": "Connexion GitHub impossible. Vérifie le Wi-Fi puis réessaie."
+  },
+  "github.auth_error": {
+    "en": "GitHub refused access. Check token permissions, expiry and rate limit.",
+    "fr": "GitHub refuse l'accès. Vérifie les droits du token, son expiration et la limite de requêtes."
+  },
+  "github.not_found": {
+    "en": "Repository or branch not found. Check its name and token access. Initialize the branch with a README first.",
+    "fr": "Dépôt ou branche introuvable. Vérifie le nom et les droits du token. Initialise la branche avec un README."
+  },
+  "github.private_required": {
+    "en": "The destination repository is public. Choose a private repository for saves.",
+    "fr": "Le dépôt de destination est public. Choisis un dépôt privé pour tes sauvegardes."
+  },
+  "github.conflict": {
+    "en": "GitHub changed during the upload. Nothing was overwritten. Retry the upload.",
+    "fr": "Le dépôt a changé pendant l'envoi. Aucun fichier distant n'a été écrasé. Réessaie."
+  },
+  "github.sd_error": {
+    "en": "Cannot read or write the backup on the SD card. Check free space and file names.",
+    "fr": "Lecture ou écriture impossible sur la SD. Vérifie l'espace libre et les noms des fichiers."
+  },
+  "github.too_large": {
+    "en": "This backup exceeds the 32 MiB GitHub sync limit.",
+    "fr": "Ce backup dépasse la limite de synchronisation de 32 Mio."
+  },
+  "github.memory_error": {
+    "en": "Not enough memory for this GitHub operation.",
+    "fr": "Mémoire insuffisante pour cette opération GitHub."
+  },
+  "github.response_error": {
+    "en": "GitHub response is invalid, too large, or could not be saved.",
+    "fr": "Réponse GitHub invalide, trop volumineuse ou impossible à enregistrer."
+  },
+  "github.name_error": {
+    "en": "Backup name is too long or invalid. Rename it before sending.",
+    "fr": "Nom du backup trop long ou invalide. Renomme-le avant l'envoi."
+  },
+  "github.http_error": {
+    "en": "GitHub error (HTTP {0}). Try again later.",
+    "fr": "Erreur GitHub (HTTP {0}). Réessaie plus tard."
+  },
+  "github.ca_missing": {
+    "en": "Certificate bundle missing. Rebuild with github-ca.pem.",
+    "fr": "Certificats absents. Recompile avec github-ca.pem."
+  },
+  "github.tls_error": {
+    "en": "Secure connection could not be verified. Check the console date. Update this build if certificates have expired.",
+    "fr": "Connexion sécurisée non vérifiée. Vérifie la date de la console. Mets cette version à jour si les certificats ont expiré."
+  },
+  "github.extract_error": {
+    "en": "Downloaded archive is invalid or the SD write failed. Existing backups were preserved.",
+    "fr": "Archive reçue invalide ou erreur d'écriture SD. Les backups existants ont été conservés."
+  },
+  "github.list_limit": {
+    "en": "This title has too many cloud backups (1000 or more). Move older backups to another folder.",
+    "fr": "Ce jeu a trop de backups distants (1000 ou plus). Déplace les anciens vers un autre dossier."
   }
 }
+

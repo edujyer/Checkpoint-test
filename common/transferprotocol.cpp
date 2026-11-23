@@ -437,7 +437,11 @@ namespace TransferProto {
                     break;
                 }
                 computedCrc = updateCrc(computedCrc, buf.get(), rd);
-                sink.writeFile(buf.get(), rd);
+                if (!sink.writeFile(buf.get(), rd)) {
+                    outError = "Failed to write extracted file.";
+                    fileOk = false;
+                    break;
+                }
                 remaining -= (uint32_t)rd;
                 if (onBytes) {
                     onBytes(rd);
@@ -649,3 +653,4 @@ namespace TransferProto {
         return sendChunk(tail.data(), tail.size());
     }
 }
+

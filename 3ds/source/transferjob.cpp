@@ -30,6 +30,7 @@
 #include "io.hpp"
 #include "logging.hpp"
 #include "progress.hpp"
+#include "util.hpp"
 #include "thread.hpp"
 #include "transfer.hpp"
 #include "transferstatus.hpp"
@@ -46,7 +47,8 @@ void TransferJob::enqueueBackup(Title title, BackupKind kind, std::u16string dst
         .successMsg               = i18n::t("outcome.backup_success"),
         .backupName               = "",
         .ip                       = "",
-        .token                    = ""});
+        .token                    = "",
+        .githubConfig             = GitHubSync::loadConfig()});
 }
 
 void TransferJob::enqueueRestore(Title title, BackupKind kind, std::u16string srcPath, std::string dataType, std::string successMsg)
@@ -60,7 +62,8 @@ void TransferJob::enqueueRestore(Title title, BackupKind kind, std::u16string sr
         .successMsg               = std::move(successMsg),
         .backupName               = "",
         .ip                       = "",
-        .token                    = ""});
+        .token                    = "",
+        .githubConfig             = GitHubSync::loadConfig()});
 }
 
 void TransferJob::enqueueSend(
@@ -77,6 +80,20 @@ void TransferJob::enqueueSend(
     item.ip         = std::move(ip);
     item.port       = port;
     item.token      = std::move(token);
+    mQueue.push_back(std::move(item));
+}
+
+void TransferJob::enqueueGitHub(Title title, BackupKind kind, int operation, std::u16string path,
+    GitHubSync::RemoteBackup remote, std::optional<GitHubSync::Config> config)
+{
+    std::lock_guard<std::mutex> lock(mMutex);
+    WorkItem item;
+    item.op = operation == 0 ? Kind::GitHubUpload : operation == 1 ? Kind::GitHubList : Kind::GitHubDownload;
+    item.title = std::move(title);
+    item.kind = kind;
+    item.path = std::move(path);
+    item.githubConfig = config ? *config : GitHubSync::loadConfig();
+    item.remote = std::move(remote);
     mQueue.push_back(std::move(item));
 }
 
@@ -134,6 +151,7 @@ void TransferJob::run(void)
     // Collected across the batch, not taken from one item: the success message
     // comes from the last item, the file that was left out may be in any of them.
     std::vector<std::string> skippedInUse;
+    std::string githubWarnings;
 
     for (;;) {
         WorkItem item;
@@ -147,7 +165,26 @@ void TransferJob::run(void)
         }
 
         JobResult current;
-        if (item.op == Kind::Send) {
+        if (item.op == Kind::GitHubUpload || item.op == Kind::GitHubList || item.op == Kind::GitHubDownload) {
+            auto id = StringUtils::format("%016llX", item.title.id());
+            auto target = item.title.backup(item.kind);
+            std::string error;
+            try {
+                if (item.op == Kind::GitHubUpload) current.ok = GitHubSync::upload(item.githubConfig, id, target.dataTypeName(), item.path, error);
+                else if (item.op == Kind::GitHubList) {
+                    current.githubList = true;
+                    current.ok = GitHubSync::list(item.githubConfig, id, target.dataTypeName(), current.githubBackups, error);
+                    current.githubTitle = item.title;
+                    current.githubKind = item.kind;
+                    current.githubConfig = item.githubConfig;
+                }
+                else current.ok = GitHubSync::download(item.githubConfig, id, target.dataTypeName(), item.remote, target.rootPath(), error);
+            }
+            catch (...) { current.ok = false; error = i18n::t("github.memory_error"); }
+            current.githubError = error;
+            current.successMsg = i18n::t(item.op == Kind::GitHubDownload ? "github.downloaded" : "github.uploaded");
+        }
+        else if (item.op == Kind::Send) {
             Transfer::SendOutcome out = Transfer::sendBackup(item.title, item.path, item.backupName, item.dataType, item.ip, item.port, item.token);
             current                   = JobResult{.isRestore = false,
                                   .ok                        = out.ok,
@@ -158,6 +195,7 @@ void TransferJob::run(void)
                                   .send                      = out};
         }
         else {
+            TransferStatus::beginLocalBatch(total + mQueue.size() + 1);
             TransferStatus::setSaveCount(done);
 
             // Only a backup item's sink reads the global cancel flag, so a restore
@@ -175,6 +213,20 @@ void TransferJob::run(void)
                 .dataType                  = item.dataType,
                 .send                      = std::nullopt};
 
+            if (item.op == Kind::Backup && out.ok && !out.cancelled && item.githubConfig.afterBackup) {
+                std::string error;
+                bool uploaded = false;
+                try {
+                    uploaded = GitHubSync::upload(item.githubConfig, StringUtils::format("%016llX", item.title.id()),
+                        target.dataTypeName(), item.path, error);
+                }
+                catch (...) { error = i18n::t("github.memory_error"); }
+                if (!uploaded) {
+                    if (!githubWarnings.empty()) githubWarnings += "\n";
+                    githubWarnings += item.title.shortDescription() + ": " + error;
+                }
+                else current.successMsg += "\n" + i18n::t("github.uploaded");
+            }
             for (auto& rel : out.skippedInUse) {
                 if (std::find(skippedInUse.begin(), skippedInUse.end(), rel) == skippedInUse.end()) {
                     skippedInUse.push_back(std::move(rel));
@@ -208,6 +260,7 @@ void TransferJob::run(void)
         mResult.failed       = failed;
         mResult.total        = total;
         mResult.skippedInUse = std::move(skippedInUse);
+        mResult.githubWarning = std::move(githubWarnings);
     }
 
     TransferStatus::end();
@@ -228,3 +281,4 @@ std::optional<TransferJob::JobResult> TransferJob::takeResult(void)
     mState.store(State::Idle);
     return result;
 }
+

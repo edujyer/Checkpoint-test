@@ -315,7 +315,8 @@ bool Configuration::quickBackup(void)
 
 bool Configuration::autoUpdate(void)
 {
-    return mAutoUpdate;
+    // Own TitleID: never replace this edition with an upstream CIA.
+    return false;
 }
 
 std::string Configuration::theme(void)
@@ -551,3 +552,4 @@ void Configuration::removeExtdataFolder(u64 id, size_t index)
     (*mJson)["additional_extdata_folders"] = folderMapToJson(mAdditionalExtdataFolders);
     mDirty                                 = true;
 }
+

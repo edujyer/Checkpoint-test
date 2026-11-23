@@ -90,6 +90,10 @@ private:
     void drawLibrary(void) const;
     void drawFolders(void) const;
     void drawNetwork(void) const;
+    void drawGitHub(void) const;
+    void editGitHub(int row);
+    std::string mGitHubRepo, mGitHubBranch;
+    bool mGitHubAuto = false, mGitHubToken = false;
     void drawAbout(void) const;
 
     void drawToggleRow(int y, const std::string& name, const std::string& sub, bool on, bool focused) const;
@@ -120,3 +124,4 @@ private:
 };
 
 #endif
+

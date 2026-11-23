@@ -97,6 +97,7 @@ protected:
     void doRestore(size_t fullIndex, size_t cellIndex);
     // Scans the script folders and raises the picker (Scripts action).
     void startScriptPicker(void);
+    void startGitHubMenu(void);
     // While a script runs: raises the overlay for a pending ScriptUiBridge
     // request (or answers a Keyboard request inline via swkbd).
     // Runs a restore of the current title's cellIndex backup, gated by the
@@ -153,3 +154,4 @@ private:
 };
 
 #endif
+

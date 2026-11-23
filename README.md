@@ -1,4 +1,12 @@
-# Checkpoint <a href="https://github.com/BernardoGiordano/Checkpoint/releases/latest"><img src="https://img.shields.io/github/downloads/BernardoGiordano/Checkpoint/total.svg"></a>
+# Checkpoint GH (3DS)
+
+Modified edition with private GitHub backup upload/download and optional
+upload after each successful backup. See [French setup guide](docs/github-sync-fr.md).
+HOME name: **Checkpoint GH**. TitleID: **000400000ED07100** (separate from Checkpoint).
+Upstream automatic CIA updates are disabled in this edition.
+Hardware testing is required before trusting the new network feature.
+
+## Original Checkpoint
 
 A fast and simple homebrew save management framework for 3DS and Switch, written in C++.
 
@@ -162,3 +170,4 @@ This project is licensed under the GNU GPLv3. Additional Terms 7.b and 7.c of GP
 Without you, this project wouldn't have existed. Thank you.
 
 [![Discord](https://discordapp.com/api/guilds/278222834633801728/widget.png?style=banner3&time-)](https://discord.gg/bGKEyfY)
+
