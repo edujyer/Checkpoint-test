@@ -145,9 +145,10 @@ private:
     std::string mLastTransferAddress; // last "ip:port" sent to; prefills the send keyboard
     std::string mDefaultReceivePin;   // "" = random PIN per receive
     u16 mServerPort      = TransferProto::kDefaultServerPort;
-    std::string BASEPATH = "/3ds/Checkpoint/config.json";
+    std::string BASEPATH = "/3ds/Checkpoint/github-edition-config.json";
     size_t oldSize       = 0;
     bool mDirty          = false; // General toggles pending a deferred save()
 };
 
 #endif
+

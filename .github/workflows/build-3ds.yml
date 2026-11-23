@@ -27,9 +27,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --location --retry 3 -o /tmp/makerom.zip https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.19.0/makerom-v0.19.0-ubuntu_x86_64.zip
-          unzip -q /tmp/makerom.zip -d /tmp/makerom
-          install -m 755 "$(find /tmp/makerom -type f -name makerom -print -quit)" /usr/local/bin/makerom
+          git clone --recursive --branch makerom-v0.19.0 --depth 1 https://github.com/3DSGuy/Project_CTR.git /tmp/project-ctr
+          make -C /tmp/project-ctr/makerom deps
+          make -C /tmp/project-ctr/makerom -j2
+          install -m 755 /tmp/project-ctr/makerom/bin/makerom /usr/local/bin/makerom
           git clone --recursive https://github.com/diasurgical/bannertool.git /tmp/bannertool
           git -C /tmp/bannertool checkout 16d8c5a0ce02a5e06e64ab42275132fca57c04a2
           git -C /tmp/bannertool submodule update --init --recursive

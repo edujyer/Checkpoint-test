@@ -15,6 +15,8 @@ Licence : GPLv3, avec les mentions et conditions additionnelles du projet origin
 Le CIA s'installe à côté de Checkpoint. Il utilise les mêmes backups dans
 /3ds/Checkpoint/saves et /3ds/Checkpoint/extdata.
 Les réglages GitHub sont séparés dans /3ds/Checkpoint/github.json.
+Les préférences de cette édition sont dans /3ds/Checkpoint/github-edition-config.json ;
+le fichier config.json de l'original est conservé.
 Les mises à jour automatiques de l'application originale sont désactivées dans
 cette édition, pour éviter de télécharger un CIA avec l'identité de l'original.
 

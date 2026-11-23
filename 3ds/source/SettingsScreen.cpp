@@ -302,7 +302,7 @@ void SettingsScreen::drawTop(void) const
     float nameX = 6 + ceilf(flag.subtex->width * 1.0f) + 6;
     TextPool::get().draw(i18n::t("settings.title"), nameX, 4, 0.5f, COLOR_TEXT);
     {
-        std::string right = "config.json";
+        std::string right = "Checkpoint GH";
         float w           = TextPool::get().width(right, 0.42f);
         TextPool::get().draw(right, 400 - 6 - w, 6, 0.42f, COLOR_FAINT);
     }
