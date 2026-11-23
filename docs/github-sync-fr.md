@@ -62,6 +62,7 @@ Une modification concurrente provoque une erreur plutôt qu'un écrasement forc�
 - ZIP limité à **32 Mio**, **4096 entrées**. Une liste de **1000 fichiers** ou plus
   est refusée pour éviter de masquer des sauvegardes.
 - Le nom du backup, avec .zip, doit faire au plus **180 octets**.
+- Prévois jusqu'à **75 Mio libres** sur la SD pour préparer l'envoi d'un ZIP de 32 Mio.
 - L'envoi suit les backups lancés depuis l'interface Checkpoint (y compris les lots).
   Un script qui écrit directement des fichiers ne déclenche pas cet envoi.
 - Pas de suppression distante ni de restauration automatique.

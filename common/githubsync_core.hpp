@@ -50,6 +50,24 @@ namespace GitHubSync {
         const auto base = name.substr(0, name.size() - 4);
         return !base.empty() && base.back() != '.' && base.back() != ' ';
     }
+    inline bool safeEntryPath(const std::string& path)
+    {
+        if (path.empty() || path.size() > 700 || path.front() == '/') return false;
+        size_t start = 0, depth = 0;
+        for (size_t i = 0; i <= path.size(); ++i) {
+            if (i == path.size() || path[i] == '/') {
+                if (i == path.size() && start == i) break; // directory's trailing slash
+                const auto part = path.substr(start, i - start);
+                if (++depth > 32 || part.empty() || part == "." || part == ".." || part.back() == '.' || part.back() == ' ') return false;
+                start = i + 1;
+            }
+            else {
+                const auto c = (unsigned char)path[i];
+                if (c < 32 || c == 127 || std::string("\\:*?\"<>|").find(c) != std::string::npos) return false;
+            }
+        }
+        return true;
+    }
     // Encode complete input chunks; callers use a multiple of three except at EOF.
     inline std::string base64(const unsigned char* data, size_t size)
     {

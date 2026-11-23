@@ -187,7 +187,7 @@ namespace {
             if (lower == "github-token.txt") return false;
             if (++entries > 4096) return false;
             const std::string relative = rel + name, full = root + relative;
-            if (!TransferProto::isSafeZipRelativePath(relative)) return false;
+            if (!GitHubSync::safeEntryPath(relative)) return false;
             struct stat st;
             if (lstat(full.c_str(), &st) != 0) return false;
             if (S_ISDIR(st.st_mode)) {
@@ -227,7 +227,7 @@ namespace {
         size_t entries = 0;
         explicit Extractor(std::string r) : root(std::move(r)) {}
         bool parents(const std::string& path) {
-            if (path.size() > 700 || !TransferProto::isSafeZipRelativePath(path)) return false;
+            if (!GitHubSync::safeEntryPath(path)) return false;
             for (size_t i = 0; i < path.size(); ++i) if (path[i] == '/') {
                 const auto dir = root + path.substr(0, i);
                 if (mkdir(dir.c_str(), 0777) != 0) { struct stat st; if (stat(dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) return false; }

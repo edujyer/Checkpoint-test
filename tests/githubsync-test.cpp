@@ -31,6 +31,12 @@ int main()
     assert(validBranch("feature/cloud"));
     for (auto s : {"", "..", "a..b", "a.lock", "a/.x", "a/../b", "a b", "a\nb", "main?", "a//b", "a/"}) assert(!validBranch(s));
     assert(safeArchiveName("2026-11-23 Pokemon.zip"));
+    assert(safeEntryPath("folder/save.bin") && safeEntryPath("folder/"));
+    for (auto s : {"../token", "x/../token", "x/.. /token", "./save", "x//save", "/save", "x:/save", "x./save", "x/sa?ve"}) assert(!safeEntryPath(s));
+    assert(!safeEntryPath(std::string("x/") + std::string(1, '\0') + "save"));
+    std::string deep;
+    for (unsigned i = 0; i < 33; ++i) deep += "x/";
+    assert(!safeEntryPath(deep));
     for (auto s : {"../secret.zip", "/x.zip", "x\\y.zip", "x:save.zip", ".zip", "x.zip/evil", "x. .zip", "x?.zip"}) assert(!safeArchiveName(s));
     const std::string plain[] = {"", "f", "fo", "foo", "foob", "fooba", "foobar"};
     const std::string encoded[] = {"", "Zg==", "Zm8=", "Zm9v", "Zm9vYg==", "Zm9vYmE=", "Zm9vYmFy"};
